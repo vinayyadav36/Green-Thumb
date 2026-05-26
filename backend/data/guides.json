@@ -1,0 +1,14 @@
+[
+  {
+    "id": "guide-1",
+    "boxId": "spring-box-1",
+    "title": "Tulip Care Guide",
+    "content": "Plant bulbs in the fall for spring blooms. Water regularly."
+  },
+  {
+    "id": "guide-2",
+    "boxId": "summer-box-1",
+    "title": "Sunflower Care Guide",
+    "content": "Plant in full sun. Water deeply but infrequently."
+  }
+]
