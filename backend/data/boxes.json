@@ -1,0 +1,24 @@
+[
+  {
+    "id": "spring-box-1",
+    "name": "Spring Awakening",
+    "season": "Spring",
+    "contents": [
+      "Tulip Bulbs",
+      "Seed Starter Kit",
+      "Gardening Gloves"
+    ],
+    "description": "A perfect box to start your spring garden."
+  },
+  {
+    "id": "summer-box-1",
+    "name": "Summer Sunshine",
+    "season": "Summer",
+    "contents": [
+      "Sunflower Seeds",
+      "Watering Can",
+      "Sun Hat"
+    ],
+    "description": "Keep your garden bright during the hot months."
+  }
+]
