@@ -1,1 +1,4 @@
-[]
+[
+  { "id": "admin-1", "name": "Admin User", "email": "admin@saltedhash.com", "password": "Admin@1234", "role": "admin", "subscriptions": [] },
+  { "id": "user-1", "name": "Demo User", "email": "user@saltedhash.com", "password": "User@1234", "role": "user", "subscriptions": ["spring-box-1", "summer-box-1"] }
+]

@@ -1,0 +1,31 @@
+[
+  {
+    "id": "sub-1",
+    "userId": "user-1",
+    "name": "Demo User",
+    "email": "user@saltedhash.com",
+    "boxId": "spring-box-1",
+    "status": "pending",
+    "timestamp": "2023-10-01T10:00:00Z"
+  },
+  {
+    "id": "sub-2",
+    "userId": "user-1",
+    "name": "Demo User",
+    "email": "user@saltedhash.com",
+    "boxId": "summer-box-1",
+    "status": "confirmed",
+    "timestamp": "2023-10-02T11:30:00Z"
+  },
+  {
+    "id": "sub-1780225326337",
+    "name": "Test Sub",
+    "email": "test@saltedhash.com",
+    "phone": "",
+    "boxId": "spring-box-1",
+    "address": "",
+    "message": "",
+    "status": "pending",
+    "timestamp": "2026-05-31T11:02:06.337Z"
+  }
+]

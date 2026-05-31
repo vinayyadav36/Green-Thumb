@@ -38,6 +38,57 @@ const adminMiddleware = (req, res, next) => {
   next();
 };
 
+// Helper to generate a dummy JWT token
+const generateToken = (user) => {
+  return Buffer.from(JSON.stringify({ id: user.id, role: user.role })).toString('base64');
+};
+
+// POST /api/auth/login
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  const users = readData('users.json');
+  const user = users.find(u => u.email === email && u.password === password); // simple match
+
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const token = generateToken(user);
+  res.json({ message: 'Login successful', token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+});
+
+// POST /api/auth/register
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Name, email, and password are required' });
+  }
+
+  const users = readData('users.json');
+  if (users.find(u => u.email === email)) {
+    return res.status(400).json({ error: 'User already exists' });
+  }
+
+  const newUser = {
+    id: `user-${Date.now()}`,
+    name,
+    email,
+    password, // Storing in plain text for demo/simulated DB
+    role: 'user',
+    subscriptions: []
+  };
+
+  users.push(newUser);
+  writeData('users.json', users);
+
+  const token = generateToken(newUser);
+  res.status(201).json({ message: 'Registration successful', token, user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role } });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -48,43 +99,97 @@ app.get('/api/boxes', (req, res) => {
   res.json(boxes);
 });
 
+// GET /api/boxes/:id
+app.get('/api/boxes/:id', (req, res) => {
+  const boxes = readData('boxes.json');
+  const box = boxes.find(b => b.id === req.params.id);
+  if (!box) return res.status(404).json({ error: 'Box not found' });
+  res.json(box);
+});
+
 // GET /api/guides
 app.get('/api/guides', (req, res) => {
+  const { plantName } = req.query;
   const guides = readData('guides.json');
+  if (plantName) {
+    const filtered = guides.filter(g => g.plantName && g.plantName.toLowerCase().includes(plantName.toLowerCase()));
+    return res.json(filtered);
+  }
   res.json(guides);
 });
 
-// POST /api/subscribe
-app.post('/api/subscribe', (req, res) => {
-  const { userId, boxId, name, email } = req.body;
-  if (!userId || !boxId) {
-    return res.status(400).json({ error: 'userId and boxId are required' });
+// GET /api/guides/:id
+app.get('/api/guides/:id', (req, res) => {
+  const guides = readData('guides.json');
+  const guide = guides.find(g => g.id === req.params.id);
+  if (!guide) return res.status(404).json({ error: 'Guide not found' });
+  res.json(guide);
+});
+
+// POST /api/subscriptions
+app.post('/api/subscriptions', (req, res) => {
+  const { name, email, phone, boxId, address, message } = req.body;
+  if (!name || !email || !boxId) {
+    return res.status(400).json({ error: 'Name, email, and boxId are required' });
   }
 
-  const users = readData('users.json');
-  let user = users.find(u => u.id === userId);
+  const subs = readData('subscriptions.json');
+  const newSub = {
+    id: `sub-${Date.now()}`,
+    name,
+    email,
+    phone,
+    boxId,
+    address,
+    message,
+    status: 'pending',
+    timestamp: new Date().toISOString()
+  };
 
-  if (!user) {
-    user = { id: userId, name, email, subscriptions: [] };
-    users.push(user);
-  }
-
-  if (!user.subscriptions.includes(boxId)) {
-    user.subscriptions.push(boxId);
-  }
-
-  writeData('users.json', users);
+  subs.push(newSub);
+  writeData('subscriptions.json', subs);
 
   const auditLogs = readData('audit.json');
-  auditLogs.push({ action: 'subscribe', userId, boxId, timestamp: new Date().toISOString() });
+  auditLogs.push({ action: 'new_subscription', subId: newSub.id, email, timestamp: new Date().toISOString() });
   writeData('audit.json', auditLogs);
 
-  res.json({ message: 'Subscribed successfully', user });
+  res.status(201).json({ message: 'Subscribed successfully', subscription: newSub });
+});
+
+// GET /api/subscriptions (Admin only)
+app.get('/api/subscriptions', adminMiddleware, (req, res) => {
+  const subs = readData('subscriptions.json');
+  res.json(subs);
+});
+
+// PATCH /api/subscriptions/:id/status (Admin only)
+app.patch('/api/subscriptions/:id/status', adminMiddleware, (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const subs = readData('subscriptions.json');
+  const subIndex = subs.findIndex(s => s.id === id);
+
+  if (subIndex === -1) return res.status(404).json({ error: 'Subscription not found' });
+
+  subs[subIndex].status = status;
+  writeData('subscriptions.json', subs);
+
+  const auditLogs = readData('audit.json');
+  auditLogs.push({ action: 'update_subscription_status', subId: id, status, timestamp: new Date().toISOString(), user: 'admin' });
+  writeData('audit.json', auditLogs);
+
+  res.json({ message: 'Status updated successfully', subscription: subs[subIndex] });
 });
 
 // GET /api/users/:userId/subscriptions
 app.get('/api/users/:userId/subscriptions', (req, res) => {
   const { userId } = req.params;
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const users = readData('users.json');
   const user = users.find(u => u.id === userId);
 
@@ -92,10 +197,11 @@ app.get('/api/users/:userId/subscriptions', (req, res) => {
     return res.json({ subscriptions: [] });
   }
 
-  const boxes = readData('boxes.json');
-  const userBoxes = boxes.filter(box => user.subscriptions.includes(box.id));
+  // Also pull detailed subscription info from subscriptions.json
+  const allSubs = readData('subscriptions.json');
+  const detailedSubs = allSubs.filter(sub => sub.userId === userId || sub.email === user.email);
 
-  res.json({ subscriptions: userBoxes });
+  res.json({ subscriptions: detailedSubs });
 });
 
 // POST /api/admin/seed
@@ -118,6 +224,12 @@ app.post('/api/admin/seed', adminMiddleware, (req, res) => {
   writeData('audit.json', auditLogs);
 
   res.json({ message: 'Database seeded successfully' });
+});
+
+// GET /api/admin/audit
+app.get('/api/admin/audit', adminMiddleware, (req, res) => {
+  const logs = readData('audit.json');
+  res.json(logs);
 });
 
 app.listen(PORT, () => {
