@@ -1,7 +1,31 @@
 [
   {
     "action": "seed",
-    "timestamp": "2026-05-26T19:06:32.351Z",
+    "timestamp": "2023-01-01T00:00:00Z",
+    "user": "system",
+    "details": "Initial seed"
+  },
+  {
+    "action": "login",
+    "timestamp": "2023-10-01T09:00:00Z",
+    "user": "user@saltedhash.com",
+    "details": "User login"
+  },
+  {
+    "action": "new_subscription",
+    "subId": "sub-1",
+    "email": "user@saltedhash.com",
+    "timestamp": "2023-10-01T10:00:00Z"
+  },
+  {
+    "action": "seed",
+    "timestamp": "2026-05-31T11:02:01.968Z",
     "user": "admin"
+  },
+  {
+    "action": "new_subscription",
+    "subId": "sub-1780225326337",
+    "email": "test@saltedhash.com",
+    "timestamp": "2026-05-31T11:02:06.338Z"
   }
 ]
